@@ -6,6 +6,8 @@ import threading
 import random
 
 
+UA = {"User-Agent" : "User-Agent:Mozilla/5.0 (compatible; MSIE 9.0; Windows NT 6.1; Trident/5.0;"}
+
 def download(url_list, id):
     for pic_url in url_list:
         try:
@@ -52,7 +54,7 @@ path = './src_img/'  # 保存路径
 
 while page_url != '':
     try:
-        html = requests.get(page_url).text
+        html = requests.get(page_url, headers=UA).text
     except Exception as e:
         print(e)
         print('Break')
