@@ -2,7 +2,7 @@ from xpinyin import Pinyin
 import argparse
 
 target_initials = ''
-line_count = 0
+line_count = 1
 
 pinyin = Pinyin()
 parser = argparse.ArgumentParser()
