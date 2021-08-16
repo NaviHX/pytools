@@ -1,0 +1,11 @@
+{
+    "verbose" : "False",
+    "roomid" : "21706862",
+    "format" : {
+        "danmu" : "{uname} : {message}",
+        "gift" : "[礼物] : {uname} {action} {num}x {giftName}",
+        "live" : "直播开始",
+        "preparing" : "直播结束",
+        "other" : "[OTHER] : {cmd}" 
+    }
+}
