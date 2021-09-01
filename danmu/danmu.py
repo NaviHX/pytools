@@ -1,15 +1,21 @@
+from curses.textpad import rectangle
 from aiowebsocket.converses import AioWebSocket
 import json
 import asyncio
 import zlib
 import brotli
 import requests
+from threading import Thread
+import time
+
+import curses
 
 with open('config.json', 'r') as f:
     config = json.load(f)
 room_id = config['roomid']
 
-async def start(url: str, roomid: str):
+
+async def start(url: str, roomid: str, outputw: curses.window):
     async with AioWebSocket(url) as aws:
         converse = aws.manipulator
 
@@ -46,17 +52,17 @@ async def start(url: str, roomid: str):
         """
         msg = bytes.fromhex(data_raw)
 
-        print('start connecting')
-
         await converse.send(msg)
-        tasks = asyncio.gather(catch_danmu(converse), send_heartbeat(converse))
+
+        tasks = asyncio.gather(catch_danmu(converse, outputw),
+                               send_heartbeat(converse))
         await tasks
 
 
-async def catch_danmu(converse):
+async def catch_danmu(converse, outputw: curses.window):
     while True:
         msg = await converse.receive()
-        parse_msg(msg)
+        parse_msg(msg, outputw)
 
 
 heartbeat_msg = '00000010001000010000000200000001'
@@ -68,59 +74,127 @@ async def send_heartbeat(converse):
         await converse.send(bytes.fromhex(heartbeat_msg))
 
 
-def parse_msg(msg):
+def parse_msg(msg, outputw: curses.window):
     data_len = int(msg[:4].hex(), 16)
     ver = int(msg[6:8].hex(), 16)
     op_type = int(msg[8:12].hex(), 16)
 
     # 截断连续收到的数据包
     if (len(msg) > data_len):
-        parse_msg(msg[data_len:])
+        parse_msg(msg[data_len:], outputw)
         msg = msg[:data_len]
 
     if (ver == 2):
         msg = zlib.decompress(msg[16:])
-        parse_msg(msg)
+        parse_msg(msg, outputw)
         return
 
     if (ver == 3):
         msg = brotli.decompress(msg[16:])
-        parse_msg(msg)
+        parse_msg(msg, outputw)
         return
 
     if (ver == 1 and config['verbose'] == 'True'):
         hot = int(msg[16:20].hex(), 16)
-        print('当前人气值 : {hot}'.format(hot=hot))
+        wprint(outputw, '当前人气值 : {hot}'.format(hot=hot))
 
     if (op_type == 5):
         try:
             jd = json.loads(msg[16:].decode('utf-8', errors='ignore'))
             if (jd['cmd'] == 'DANMU_MSG'):
-                print(config['format']['danmu'].format(uname=jd['info'][2][1],
-                                                       message=jd['info'][1]))
+                wprint(
+                    outputw,
+                    config['format']['danmu'].format(uname=jd['info'][2][1],
+                                                     message=jd['info'][1]))
             elif (jd['cmd'] == 'SEND_GIFT'):
-                print(config['format']['gift'].format(
-                    uname=jd['data']['uname'],
-                    action=jd['data']['action'],
-                    num=jd['data']['num'],
-                    giftName=jd['data']['giftName']))
+                wprint(
+                    outputw, config['format']['gift'].format(
+                        uname=jd['data']['uname'],
+                        action=jd['data']['action'],
+                        num=jd['data']['num'],
+                        giftName=jd['data']['giftName']))
             elif (jd['cmd'] == 'LIVE'):
-                print(config['format']['live'])
+                wprint(outputw, config['format']['live'])
             elif (jd['cmd'] == 'PREPARING'):
-                print(config['format']['preparing'])
+                wprint(outputw, config['format']['preparing'])
             elif config['verbose'] == 'True':
-                print(config['format']['oither'].format(cmd=jd['cmd']))
+                wprint(outputw,
+                       config['format']['oither'].format(cmd=jd['cmd']))
         except Exception as e:
             pass
 
+
 def get_real_id(roomid):
-    data = requests.get('https://api.live.bilibili.com/room/v1/Room/room_init?id={roomid}'.format(roomid=roomid))
+    data = requests.get(
+        'https://api.live.bilibili.com/room/v1/Room/room_init?id={roomid}'.
+        format(roomid=roomid))
     data = json.loads(data.text)
     try:
         return data['data']['room_id']
     except:
-        return room_id
+        return roomid
 
-if __name__ == '__main__':
-    room_id=str(get_real_id(room_id))
-    asyncio.run(start('wss://broadcastlv.chat.bilibili.com:2245/sub', room_id))
+send_api_url='https://api.live.bilibili.com/msg/send'
+
+def input_thread(inputw: curses.window, roomid: str):
+    while True:
+        msg = inputw.getstr()
+        inputw.clear()
+
+        # send msg
+        form ={
+            'bubble': '0',
+            'msg': msg,
+            'color': '16777215',
+            'mode': '1',
+            'fontsize': '25',
+            'rnd': str(int(time.time())),
+            'roomid': roomid,
+            'csrf':config['csrf'],
+            'csrf_token':config['csrf_token'],
+        }
+
+        header ={
+            'cookie':config['cookie'],
+            'origin':'https://live.bili.com',
+            'referer': 'https://live.bilibili.com/blanc/1029?liteVersion=true',
+            'user-agent': 'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36',
+        }
+
+        requests.post(send_api_url,data=form,headers=header)
+
+
+def wprint(w: curses.window, msg: str):
+    try:
+        w.addstr(msg + '\n')
+        w.refresh()
+    except:
+        w.clear()
+
+
+def main(stdscr: curses.window):
+    curses.echo()
+    curses.nocbreak()
+
+    real_id = str(get_real_id(room_id))
+    output_win = curses.newwin(20, 80, 1, 1)
+    input_win = curses.newwin(3, 80, 23, 1)
+
+    rectangle(stdscr, 0, 0, 21, 81)
+    rectangle(stdscr, 22, 0, 26, 81)
+
+    stdscr.refresh()
+    output_win.refresh()
+    input_win.refresh()
+
+    t = Thread(None, input_thread, args=(input_win, real_id))
+    t.start()
+
+    asyncio.run(
+        start('wss://broadcastlv.chat.bilibili.com:2245/sub', real_id,
+              output_win))
+
+    t.join()
+
+
+curses.wrapper(main)
