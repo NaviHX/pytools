@@ -96,7 +96,7 @@ def parse_msg(msg, outputw: curses.window):
 
     if (ver == 1 and config['verbose'] == 'True'):
         hot = int(msg[16:20].hex(), 16)
-        wprint(outputw, '当前人气值 : {hot}'.format(hot=hot))
+        wprint(outputw, config['format']['hot'].format(hot=hot))
 
     if (op_type == 5):
         try:
@@ -176,12 +176,16 @@ def main(stdscr: curses.window):
     curses.echo()
     curses.nocbreak()
 
-    real_id = str(get_real_id(room_id))
-    output_win = curses.newwin(20, 80, 1, 1)
-    input_win = curses.newwin(3, 80, 23, 1)
+    width=config['size']['width']
+    ol=config['size']['output_lines']
+    il=config['size']['input_lines']
 
-    rectangle(stdscr, 0, 0, 21, 81)
-    rectangle(stdscr, 22, 0, 26, 81)
+    real_id = str(get_real_id(room_id))
+    output_win = curses.newwin(ol, width, 1, 1)
+    input_win = curses.newwin(il, width, ol+3, 1)
+
+    rectangle(stdscr, 0, 0, ol+1, width+1)
+    rectangle(stdscr, ol+2, 0, ol+2+il+1, width+1)
 
     stdscr.refresh()
     output_win.refresh()
