@@ -10,6 +10,35 @@ import time
 
 import curses
 
+
+class queue:
+    def __init__(self, maxsize):
+        self.items = []
+        self.maxsize = maxsize
+        self.size = 0
+
+    def push(self, value):
+        if not self.full():
+            self.items.append(value)
+            self.size += 1
+
+    def pop(self):
+        if not self.empty():
+            self.size -= 1
+            return self.items.pop(0)
+        return None
+
+    def full(self) -> bool:
+        if self.size < self.maxsize:
+            return False
+        return True
+
+    def empty(self) -> bool:
+        if self.size == 0:
+            return True
+        return False
+
+
 with open('config.json', 'r') as f:
     config = json.load(f)
 room_id = config['roomid']
@@ -134,7 +163,9 @@ def get_real_id(roomid):
     except:
         return roomid
 
-send_api_url='https://api.live.bilibili.com/msg/send'
+
+send_api_url = 'https://api.live.bilibili.com/msg/send'
+
 
 def input_thread(inputw: curses.window, roomid: str):
     while True:
@@ -142,7 +173,7 @@ def input_thread(inputw: curses.window, roomid: str):
         inputw.clear()
 
         # send msg
-        form ={
+        form = {
             'bubble': '0',
             'msg': msg,
             'color': '16777215',
@@ -150,42 +181,63 @@ def input_thread(inputw: curses.window, roomid: str):
             'fontsize': '25',
             'rnd': str(int(time.time())),
             'roomid': roomid,
-            'csrf':config['csrf'],
-            'csrf_token':config['csrf_token'],
+            'csrf': config['csrf'],
+            'csrf_token': config['csrf_token'],
         }
 
-        header ={
-            'cookie':config['cookie'],
-            'origin':'https://live.bili.com',
-            'referer': 'https://live.bilibili.com/blanc/1029?liteVersion=true',
-            'user-agent': 'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36',
+        header = {
+            'cookie':
+            config['cookie'],
+            'origin':
+            'https://live.bili.com',
+            'referer':
+            'https://live.bilibili.com/blanc/1029?liteVersion=true',
+            'user-agent':
+            'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36',
         }
 
-        requests.post(send_api_url,data=form,headers=header)
+        requests.post(send_api_url, data=form, headers=header)
+
+
+msg_queue = queue(config['size']['output_lines'] - 1)
 
 
 def wprint(w: curses.window, msg: str):
+    fail = False
     try:
+        msg_queue.push(msg)
         w.addstr(msg + '\n')
         w.refresh()
     except:
         w.clear()
+        fail = True
+
+    while fail:
+        try:
+            if not msg_queue.empty():
+                msg_queue.pop()
+            for m in msg_queue.items:
+                w.addstr(m + '\n')
+            w.refresh()
+            fail = False
+        except:
+            pass
 
 
 def main(stdscr: curses.window):
     curses.echo()
     curses.nocbreak()
 
-    width=config['size']['width']
-    ol=config['size']['output_lines']
-    il=config['size']['input_lines']
+    width = config['size']['width']
+    ol = config['size']['output_lines']
+    il = config['size']['input_lines']
 
     real_id = str(get_real_id(room_id))
     output_win = curses.newwin(ol, width, 1, 1)
-    input_win = curses.newwin(il, width, ol+3, 1)
+    input_win = curses.newwin(il, width, ol + 3, 1)
 
-    rectangle(stdscr, 0, 0, ol+1, width+1)
-    rectangle(stdscr, ol+2, 0, ol+2+il+1, width+1)
+    rectangle(stdscr, 0, 0, ol + 1, width + 1)
+    rectangle(stdscr, ol + 2, 0, ol + 2 + il + 1, width + 1)
 
     stdscr.refresh()
     output_win.refresh()
