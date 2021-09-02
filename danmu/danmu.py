@@ -125,7 +125,8 @@ def parse_msg(msg, outputw: curses.window):
 
     if (ver == 1 and config['verbose'] == 'True'):
         hot = int(msg[16:20].hex(), 16)
-        wprint(outputw, config['format']['hot'].format(hot=hot))
+        if hot != 2065851247:
+            wprint(outputw, config['format']['hot'].format(hot=hot))
 
     if (op_type == 5):
         try:
@@ -238,6 +239,12 @@ def main(stdscr: curses.window):
 
     rectangle(stdscr, 0, 0, ol + 1, width + 1)
     rectangle(stdscr, ol + 2, 0, ol + 2 + il + 1, width + 1)
+
+    if width > 'Message'.__len__():
+        stdscr.addstr(ol + 1, 1, 'Message')
+
+    if width > 'Press Enter'.__len__():
+        stdscr.addstr(ol + 2 + il + 1, 1, 'Press Enter')
 
     stdscr.refresh()
     output_win.refresh()
