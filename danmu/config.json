@@ -1,6 +1,13 @@
 {
-    "verbose": "True",
-    "roomid": "22333522",
+    "roomid": "21930668",
+    "enable":{
+        "danmu": true,
+        "gift": true,
+        "live": true,
+        "preparing": true,
+        "other": true,
+        "hot": true
+    },
     "format": {
         "danmu": "{uname} : {message}",
         "gift": "[礼物]:{uname}{action}{num}x{giftName}",
@@ -10,9 +17,9 @@
         "hot": "[人气值] : {hot}"
     },
     "size": {
-        "output_lines": 15,
-        "input_lines": 3,
-        "width": 50
+        "output_lines": 20,
+        "input_lines": 1,
+        "width": 25
     },
     "csrf": "None",
     "csrf_token": "None",
