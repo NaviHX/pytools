@@ -251,6 +251,7 @@ def main(stdscr: curses.window):
     input_win.refresh()
 
     t = Thread(None, input_thread, args=(input_win, real_id))
+    t.setDaemon(True)
     t.start()
 
     asyncio.run(
