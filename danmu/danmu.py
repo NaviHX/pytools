@@ -10,8 +10,15 @@ import time
 
 import curses
 
+danmu_handler = None
+gift_handler = None
+live_handler = None
+preparing_handler = None
+other_handler = None
+hot_handler = None
 
-class queue:
+
+class mqueue:
     def __init__(self, maxsize):
         self.items = []
         self.maxsize = maxsize
@@ -123,33 +130,49 @@ def parse_msg(msg, outputw: curses.window):
         parse_msg(msg, outputw)
         return
 
-    if (ver == 1 and config['verbose'] == 'True'):
+    if (ver == 1 and config['enable']['hot'] == True):
         hot = int(msg[16:20].hex(), 16)
         if hot != 2065851247:
             wprint(outputw, config['format']['hot'].format(hot=hot))
+            if hot_handler != None:
+                hot_handler(hot=hot)
 
     if (op_type == 5):
         try:
             jd = json.loads(msg[16:].decode('utf-8', errors='ignore'))
-            if (jd['cmd'] == 'DANMU_MSG'):
+            if (jd['cmd'] == 'DANMU_MSG' and config['enable']['danmu']):
                 wprint(
                     outputw,
                     config['format']['danmu'].format(uname=jd['info'][2][1],
                                                      message=jd['info'][1]))
-            elif (jd['cmd'] == 'SEND_GIFT'):
+                if danmu_handler != None:
+                    danmu_handler(uname=jd['info'][2][1],
+                                  message=jd['info'][1])
+            elif (jd['cmd'] == 'SEND_GIFT' and config['enable']['gift']):
                 wprint(
                     outputw, config['format']['gift'].format(
                         uname=jd['data']['uname'],
                         action=jd['data']['action'],
                         num=jd['data']['num'],
                         giftName=jd['data']['giftName']))
-            elif (jd['cmd'] == 'LIVE'):
+                if gift_handler != None:
+                    gift_handler(uname=jd['data']['uname'],
+                                 action=jd['data']['action'],
+                                 num=jd['data']['num'],
+                                 giftName=jd['data']['giftName'])
+            elif (jd['cmd'] == 'LIVE' and config['enable']['live']):
                 wprint(outputw, config['format']['live'])
-            elif (jd['cmd'] == 'PREPARING'):
+                if live_handler != None:
+                    live_handler()
+            elif (jd['cmd'] == 'PREPARING' and config['enable']['preparing']):
                 wprint(outputw, config['format']['preparing'])
-            elif config['verbose'] == 'True':
+                if preparing_handler != None:
+                    preparing_handler()
+            elif config['enable']['cmd'] == 'True':
                 wprint(outputw,
-                       config['format']['oither'].format(cmd=jd['cmd']))
+                       config['format']['other'].format(cmd=jd['cmd']))
+                if other_handler != None:
+                    other_handler(cmd=jd['cmd'])
         except Exception as e:
             pass
 
@@ -200,7 +223,7 @@ def input_thread(inputw: curses.window, roomid: str):
         requests.post(send_api_url, data=form, headers=header)
 
 
-msg_queue = queue(config['size']['output_lines'] - 1)
+msg_queue = mqueue(config['size']['output_lines'] - 1)
 
 
 def wprint(w: curses.window, msg: str):
@@ -260,5 +283,8 @@ def main(stdscr: curses.window):
 
     t.join()
 
+def Danmu():
+    curses.wrapper(main)
 
-curses.wrapper(main)
+if __name__ == '__main__':
+    Danmu()
