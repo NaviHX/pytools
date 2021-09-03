@@ -1,11 +1,20 @@
 {
-    "verbose" : "False",
-    "roomid" : "21706862",
-    "format" : {
-        "danmu" : "{uname} : {message}",
-        "gift" : "[礼物] : {uname} {action} {num}x {giftName}",
-        "live" : "直播开始",
-        "preparing" : "直播结束",
-        "other" : "[OTHER] : {cmd}" 
-    }
+    "verbose": "True",
+    "roomid": "22333522",
+    "format": {
+        "danmu": "{uname} : {message}",
+        "gift": "[礼物]:{uname}{action}{num}x{giftName}",
+        "live": "直播开始",
+        "preparing": "直播准备中",
+        "other": "[OTHER] : {cmd}",
+        "hot": "[人气值] : {hot}"
+    },
+    "size": {
+        "output_lines": 15,
+        "input_lines": 3,
+        "width": 50
+    },
+    "csrf": "None",
+    "csrf_token": "None",
+    "cookie": "None"
 }
