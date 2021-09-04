@@ -7,6 +7,8 @@ import brotli
 import requests
 from threading import Thread
 import time
+from wcwidth import wcswidth
+from math import ceil
 
 import curses
 
@@ -29,11 +31,11 @@ class mqueue:
             self.items.append(value)
             self.size += 1
 
-    def pop(self):
+    def pop(self) -> str:
         if not self.empty():
             self.size -= 1
             return self.items.pop(0)
-        return None
+        return ''
 
     def full(self) -> bool:
         if self.size < self.maxsize:
@@ -106,7 +108,7 @@ heartbeat_msg = '00000010001000010000000200000001'
 
 async def send_heartbeat(converse):
     while True:
-        await asyncio.sleep(30)
+        await asyncio.sleep(25)
         await converse.send(bytes.fromhex(heartbeat_msg))
 
 
@@ -223,29 +225,9 @@ def input_thread(inputw: curses.window, roomid: str):
         requests.post(send_api_url, data=form, headers=header)
 
 
-msg_queue = mqueue(config['size']['output_lines'] - 1)
-
-
 def wprint(w: curses.window, msg: str):
-    fail = False
-    try:
-        msg_queue.push(msg)
-        w.addstr(msg + '\n')
-        w.refresh()
-    except:
-        w.clear()
-        fail = True
-
-    while fail:
-        try:
-            if not msg_queue.empty():
-                msg_queue.pop()
-            for m in msg_queue.items:
-                w.addstr(m + '\n')
-            w.refresh()
-            fail = False
-        except:
-            pass
+    w.addstr(msg + '\n')
+    w.refresh()
 
 
 def main(stdscr: curses.window):
@@ -258,6 +240,7 @@ def main(stdscr: curses.window):
 
     real_id = str(get_real_id(room_id))
     output_win = curses.newwin(ol, width, 1, 1)
+    output_win.scrollok(True)
     input_win = curses.newwin(il, width, ol + 3, 1)
 
     rectangle(stdscr, 0, 0, ol + 1, width + 1)
@@ -283,8 +266,10 @@ def main(stdscr: curses.window):
 
     t.join()
 
+
 def Danmu():
     curses.wrapper(main)
+
 
 if __name__ == '__main__':
     Danmu()
