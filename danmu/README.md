@@ -44,3 +44,26 @@ UI的配置在`size`项中
 弹幕姬支持发送弹幕。使用发送功能需要进行配置cookie与csrf相关的变量。csrf的值一般不发生变化，cookie值需要每次进入直播间时重新获取。
 
 获取方法为打开直播间，打开浏览器`F12`的控制台，选择`network`标签，在直播间发送一条弹幕，在`filter`栏中搜索send，点击搜索结果，在request header中可以找到。
+
+# 如何使用
+
+完成配置文件后，执行`danmu.py`文件即可。
+
+## 二次开发
+
+为了方便二次开发，脚本提供了每一种弹幕的回调函数，在输出到窗口中后执行。回调函数类型如下表
+
+|函数名|含义|
+|-|-|
+|danmu_handler|普通弹幕|
+|gift_handleri|赠送礼物|
+|live_handler|直播开始事件|
+|preparing_handler|直播结束/准备中事件|
+|other_handler|其他|
+|hot_handler|人气值/心跳包回应|
+
+默认值均为`None`
+
+将`danmu.py`导入后，设置回调函数，执行`Danmu()`即可
+
+示例：[demo.py](https://github.com/NaviHX/pytools/blob/master/danmu/demo.py)
