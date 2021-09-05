@@ -21,6 +21,7 @@
 |配置|含义|支持的变量|
 |-|-|-|
 |danmu|普通的弹幕信息|uname：发送者ID message：弹幕|
+|danmu-badge|佩戴勋章用户的弹幕信息|uname：发送者ID message：弹幕 badge：勋章名|
 |gift|礼物信息|uname：发送者ID action：发送礼物的动作 num：礼物数量 gift：礼物名称|
 |live|直播开始提示| - |
 |preparing|直播结束/准备中提示| - |
@@ -53,14 +54,14 @@ UI的配置在`size`项中
 
 为了方便二次开发，脚本提供了每一种弹幕的回调函数，在输出到窗口中后执行。回调函数类型如下表
 
-|函数名|含义|
-|-|-|
-|danmu_handler|普通弹幕|
-|gift_handleri|赠送礼物|
-|live_handler|直播开始事件|
-|preparing_handler|直播结束/准备中事件|
-|other_handler|其他|
-|hot_handler|人气值/心跳包回应|
+|函数名|含义|参数|
+|-|-|-|
+|danmu_handler|普通弹幕|`(uname,message,badge=None)`|
+|gift_handleri|赠送礼物|`(uname,action,num,giftName)`|
+|live_handler|直播开始事件|`()`|
+|preparing_handler|直播结束/准备中事件|`()`|
+|other_handler|其他|`(cmd)`|
+|hot_handler|人气值/心跳包回应|`(hot)`|
 
 默认值均为`None`
 
