@@ -9,8 +9,9 @@ engine.setProperty('rate','60')
 
 mq = Queue()
 
-def dh(uname, message):
-    mq.put("{uname}说 {message}".format(uname=uname,message=message))
+def dh(uname, message, badge=None):
+    if uname != 'Navi_Hex':
+        mq.put("{uname}说 {message}".format(uname=uname,message=message))
 
 def gh(uname,action,num,giftName):
     mq.put("感谢{uname}{action}的{num}个{giftName}".format(uname=uname,action=action,num=num,giftName=giftName))
