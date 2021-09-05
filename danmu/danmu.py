@@ -143,13 +143,23 @@ def parse_msg(msg, outputw: curses.window):
         try:
             jd = json.loads(msg[16:].decode('utf-8', errors='ignore'))
             if (jd['cmd'] == 'DANMU_MSG' and config['enable']['danmu']):
-                wprint(
-                    outputw,
-                    config['format']['danmu'].format(uname=jd['info'][2][1],
-                                                     message=jd['info'][1]))
-                if danmu_handler != None:
-                    danmu_handler(uname=jd['info'][2][1],
-                                  message=jd['info'][1])
+                if len(jd['info'][3]) == 0:
+                    wprint(
+                        outputw, config['format']['danmu'].format(
+                            uname=jd['info'][2][1], message=jd['info'][1]))
+                    if danmu_handler != None:
+                        danmu_handler(uname=jd['info'][2][1],
+                                      message=jd['info'][1])
+                else:
+                    wprint(
+                        outputw, config['format']['danmu-badge'].format(
+                            uname=jd['info'][2][1],
+                            message=jd['info'][1],
+                            badge=jd['info'][3][1]))
+                    if danmu_handler != None:
+                        danmu_handler(uname=jd['info'][2][1],
+                                      message=jd['info'][1],
+                                      badge=jd['info'][3][1])
             elif (jd['cmd'] == 'SEND_GIFT' and config['enable']['gift']):
                 wprint(
                     outputw, config['format']['gift'].format(
@@ -199,30 +209,34 @@ def input_thread(inputw: curses.window, roomid: str):
         inputw.clear()
 
         # send msg
-        form = {
-            'bubble': '0',
-            'msg': msg,
-            'color': '16777215',
-            'mode': '1',
-            'fontsize': '25',
-            'rnd': str(int(time.time())),
-            'roomid': roomid,
-            'csrf': config['csrf'],
-            'csrf_token': config['csrf_token'],
-        }
+        send_danmu(roomid=roomid, msg=msg)
 
-        header = {
-            'cookie':
-            config['cookie'],
-            'origin':
-            'https://live.bili.com',
-            'referer':
-            'https://live.bilibili.com/blanc/1029?liteVersion=true',
-            'user-agent':
-            'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36',
-        }
 
-        requests.post(send_api_url, data=form, headers=header)
+def send_danmu(roomid: str, msg: str):
+    form = {
+        'bubble': '0',
+        'msg': msg,
+        'color': '16777215',
+        'mode': '1',
+        'fontsize': '25',
+        'rnd': str(int(time.time())),
+        'roomid': roomid,
+        'csrf': config['csrf'],
+        'csrf_token': config['csrf_token'],
+    }
+
+    header = {
+        'cookie':
+        config['cookie'],
+        'origin':
+        'https://live.bili.com',
+        'referer':
+        'https://live.bilibili.com/blanc/1029?liteVersion=true',
+        'user-agent':
+        'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36',
+    }
+
+    requests.post(send_api_url, data=form, headers=header)
 
 
 def wprint(w: curses.window, msg: str):

@@ -10,6 +10,7 @@
     },
     "format": {
         "danmu": "{uname} : {message}",
+        "danmu-badge": "[{badge}]{uname} : {message}",
         "gift": "[礼物]:{uname}{action}{num}x{giftName}",
         "live": "直播开始",
         "preparing": "直播准备中",
