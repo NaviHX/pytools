@@ -1,0 +1,6 @@
+aiowebsocket==1.0.0.dev2
+requests==2.22.0
+brotlipy==0.7.0
+pyttsx3==2.90
+wcwidth==0.2.5
+brotli==1.0.9
